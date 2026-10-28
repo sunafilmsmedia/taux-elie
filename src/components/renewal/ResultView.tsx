@@ -8,6 +8,7 @@ import { formatRatePercent } from "@/lib/format";
 import { renewalConfig } from "@/lib/config";
 import { trackPixel } from "@/lib/pixel";
 import BrokerCard from "@/components/ui/BrokerCard";
+import Spectrum from "@/components/ui/Spectrum";
 
 interface StoredResult {
   result: RenewalResult;
@@ -76,10 +77,26 @@ export default function ResultView({ leadId }: { leadId: string }) {
           </p>
         </div>
 
-        {/* Cartes de recommandation */}
+        {/* Vers quoi ton profil penche */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <ResultCard label="Type de taux suggéré" value={rateTypeLabel} accent="ai" />
-          <ResultCard label="Terme suggéré" value={termLabel} accent="brand" />
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Type de taux suggéré
+            </div>
+            <div className="mt-1 text-2xl font-extrabold text-ai">{rateTypeLabel}</div>
+            <div className="mt-5">
+              <Spectrum leftLabel="Variable" rightLabel="Fixe" value={result.stabilityScore} color="#00C9A7" />
+            </div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Terme suggéré
+            </div>
+            <div className="mt-1 text-2xl font-extrabold text-white">{termLabel}</div>
+            <div className="mt-5">
+              <Spectrum leftLabel="3 ans" rightLabel="5 ans" value={result.horizonScore} color="#00C9A7" />
+            </div>
+          </div>
         </div>
 
         {/* Explications */}
@@ -90,6 +107,16 @@ export default function ResultView({ leadId }: { leadId: string }) {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p className="text-sm leading-relaxed text-slate-200 sm:text-base">{result.termMessage}</p>
           </div>
+          {result.counterfactualMessage && (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Pourquoi pas {result.counterfactualLabel} ?
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-slate-300 sm:text-base">
+                {result.counterfactualMessage}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Taux du marché */}
@@ -175,20 +202,3 @@ function RateFigure({ label, value }: { label: string; value: number | null }) {
   );
 }
 
-function ResultCard({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent: "ai" | "brand";
-}) {
-  const accentClass = accent === "ai" ? "text-ai" : "text-white";
-  return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
-      <div className={`mt-2 text-2xl font-extrabold ${accentClass}`}>{value}</div>
-    </div>
-  );
-}

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RenewalInput } from "@/types/renewal";
-import Gauge from "@/components/ui/Gauge";
+import Spectrum from "@/components/ui/Spectrum";
 import ProgressBar from "@/components/ui/ProgressBar";
 import LoadingAI from "./LoadingAI";
 import { computeLivePreview } from "@/lib/livePreview";
@@ -171,32 +171,43 @@ export default function RenewalForm() {
         </div>
 
         <aside className="hidden flex-col gap-4 lg:flex">
-          <Gauge
-            eyebrow="Ton profil de taux"
-            score={preview.stabilityScore}
-            label={preview.hasEnoughInfo ? RATE_TYPE_LABELS[preview.rateType] : "À découvrir"}
-            description={
-              preview.hasEnoughInfo
-                ? "Basé sur ta tolérance au stress financier et tes priorités."
-                : "Réponds à quelques questions pour voir ton profil se préciser."
-            }
-            color={GAUGE_COLOR}
-            hasEnoughInfo={preview.hasEnoughInfo}
-            compact
-          />
-          <Gauge
-            eyebrow="Ton horizon"
-            score={preview.horizonScore}
-            label={preview.hasEnoughInfo ? TERM_LABELS[preview.term] : "À découvrir"}
-            description={
-              preview.hasEnoughInfo
-                ? "Basé sur ta carrière et tes projets de vie à venir."
-                : "Réponds à quelques questions pour voir ton horizon se préciser."
-            }
-            color={GAUGE_COLOR}
-            hasEnoughInfo={preview.hasEnoughInfo}
-            compact
-          />
+          <div className="rounded-3xl border border-white/15 bg-white/[0.03] p-6 shadow-card backdrop-blur">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neon">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neon/15">⚡</span>
+              Ton profil de taux
+            </div>
+            <div className="mt-4 text-xl font-extrabold text-white">
+              {preview.hasEnoughInfo ? RATE_TYPE_LABELS[preview.rateType] : "À découvrir"}
+            </div>
+            <div className="mt-4">
+              <Spectrum
+                leftLabel="Variable"
+                rightLabel="Fixe"
+                value={preview.stabilityScore}
+                color={GAUGE_COLOR}
+                active={preview.hasEnoughInfo}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/15 bg-white/[0.03] p-6 shadow-card backdrop-blur">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neon">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neon/15">⚡</span>
+              Ton horizon
+            </div>
+            <div className="mt-4 text-xl font-extrabold text-white">
+              {preview.hasEnoughInfo ? TERM_LABELS[preview.term] : "À découvrir"}
+            </div>
+            <div className="mt-4">
+              <Spectrum
+                leftLabel="3 ans"
+                rightLabel="5 ans"
+                value={preview.horizonScore}
+                color={GAUGE_COLOR}
+                active={preview.hasEnoughInfo}
+              />
+            </div>
+          </div>
         </aside>
       </div>
     </main>

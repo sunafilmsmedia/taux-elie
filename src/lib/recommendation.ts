@@ -8,6 +8,12 @@ export interface RecommendationContent {
   termLabel: string;
   rateMessage: string;
   termMessage: string;
+  // Pôle opposé (ex: "Taux variable et un terme de 3 ans") et pourquoi ce
+  // n'est probablement pas le bon choix pour cette personne. `null` quand le
+  // profil est trop équilibré (rateType "balanced") pour qu'un pôle opposé
+  // net ait du sens.
+  counterfactualLabel: string | null;
+  counterfactualMessage: string | null;
   cta: string;
 }
 
@@ -75,11 +81,64 @@ function buildTermMessage(input: RenewalInput, term: TermRecommendation): string
   return `Un terme de 3 ANS te laisserait plus de flexibilité : ${why}. Tu pourrais revisiter tes options plus souvent, sans rester engagé aussi longtemps.`;
 }
 
+// Explique pourquoi le pôle OPPOSÉ (ex: variable + 3 ans quand on recommande
+// fixe + 5 ans) ne colle probablement pas à cette personne — une façon
+// concrète de justifier le résultat par contraste plutôt que seulement en
+// l'affirmant.
+function buildCounterfactual(
+  input: RenewalInput,
+  rateType: RateTypeRecommendation,
+  term: TermRecommendation
+): { label: string; message: string } | null {
+  if (rateType === "balanced") return null;
+
+  const oppositeRateType: RateTypeRecommendation = rateType === "fixed" ? "variable" : "fixed";
+  const oppositeTerm: TermRecommendation = term === "3" ? "5" : "3";
+  const label = `${RATE_TYPE_LABELS[oppositeRateType]} et un ${TERM_LABELS[oppositeTerm].toLowerCase()}`;
+
+  const reasons: string[] = [];
+
+  if (oppositeRateType === "variable") {
+    // On recommande fixe — pourquoi pas variable.
+    if (input.stressTolerance !== "comfortable") {
+      reasons.push("une fluctuation de paiement ne te laisserait pas indifférent(e)");
+    }
+    if (input.priorityBalance !== "savings") {
+      reasons.push("chercher le taux le plus bas possible, quitte à ce qu'il bouge, n'est pas ta priorité numéro un");
+    }
+    if (input.financialBuffer === "none") {
+      reasons.push("tu n'as pas la marge financière pour absorber une hausse si jamais");
+    }
+  } else {
+    // On recommande variable — pourquoi pas fixe.
+    if (input.stressTolerance !== "very_stressed") {
+      reasons.push("une fluctuation de paiement ne t'inquièterait pas tant que ça");
+    }
+    if (input.priorityBalance !== "stability") {
+      reasons.push("la tranquillité d'esprit totale n'est pas ce que tu as mis en priorité");
+    }
+  }
+
+  if (oppositeTerm === "3") {
+    reasons.push("et rien n'indique que tu voudrais revisiter ta décision aussi tôt");
+  } else {
+    reasons.push("et t'engager pour 5 ans serait probablement plus long que ce que ta situation justifie en ce moment");
+  }
+
+  const why = reasons.length > 0 ? reasons.join(", ") : "ce profil-là ne correspond pas à ce que tu as répondu";
+  const labelLower = `${RATE_TYPE_LABELS[oppositeRateType].toLowerCase()} et un ${TERM_LABELS[oppositeTerm].toLowerCase()}`;
+  const message = `Un ${labelLower} conviendrait plutôt à quelqu'un dans une situation différente de la tienne : ${why}.`;
+
+  return { label, message };
+}
+
 export function determineRecommendation(
   input: RenewalInput,
   rateType: RateTypeRecommendation,
   term: TermRecommendation
 ): RecommendationContent {
+  const counterfactual = buildCounterfactual(input, rateType, term);
+
   return {
     rateType,
     term,
@@ -87,6 +146,8 @@ export function determineRecommendation(
     termLabel: TERM_LABELS[term],
     rateMessage: buildRateMessage(input, rateType),
     termMessage: buildTermMessage(input, term),
+    counterfactualLabel: counterfactual?.label ?? null,
+    counterfactualMessage: counterfactual?.message ?? null,
     cta: "Valider mon renouvellement avec un courtier",
   };
 }

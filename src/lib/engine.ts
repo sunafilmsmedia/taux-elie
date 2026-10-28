@@ -38,6 +38,8 @@ export async function processLead(input: RenewalInput): Promise<EngineOutput> {
     term,
     rateMessage: recommendation.rateMessage,
     termMessage: recommendation.termMessage,
+    counterfactualLabel: recommendation.counterfactualLabel,
+    counterfactualMessage: recommendation.counterfactualMessage,
     rates,
   };
 

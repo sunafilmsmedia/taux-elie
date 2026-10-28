@@ -59,6 +59,8 @@ export interface RenewalResult {
 
   rateMessage: string;
   termMessage: string;
+  counterfactualLabel: string | null;
+  counterfactualMessage: string | null;
 
   rates: RateSnapshot;
   aiResponse: string;
