@@ -4,6 +4,7 @@ import {
   CAREER_OUTLOOK_LABELS,
   CURRENT_RATE_TYPE_LABELS,
   FINANCIAL_BUFFER_LABELS,
+  formatDateFr,
   LIFE_CHANGE_LABELS,
   PRIORITY_BALANCE_LABELS,
   STRESS_TOLERANCE_LABELS,
@@ -62,6 +63,7 @@ export function buildCrmPayload(input: RenewalInput, result: RenewalResult): Crm
     lead_type,
     tags,
     customFields: {
+      renewalDate: formatDateFr(input.renewalDate),
       careerOutlook: CAREER_OUTLOOK_LABELS[input.careerOutlook],
       lifeChangeLikelihood: LIFE_CHANGE_LABELS[input.lifeChangeLikelihood],
       stressTolerance: STRESS_TOLERANCE_LABELS[input.stressTolerance],

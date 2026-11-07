@@ -29,6 +29,9 @@ export interface RenewalInput {
   email: string;
   phone: string;
 
+  // Date d'échéance du prêt hypothécaire actuel (format "YYYY-MM-DD").
+  renewalDate: string;
+
   careerOutlook: CareerOutlook;
   lifeChangeLikelihood: LifeChangeLikelihood;
   stressTolerance: StressTolerance;

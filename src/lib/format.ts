@@ -23,6 +23,12 @@ export function formatRatePercent(value: number | null | undefined): string {
   return `${value.toLocaleString("fr-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`;
 }
 
+export function formatDateFr(dateStr: string): string {
+  const date = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" });
+}
+
 export const CAREER_OUTLOOK_LABELS: Record<CareerOutlook, string> = {
   stable: "Probablement au même endroit, revenu similaire",
   raise_expected: "Même emploi, progression de revenu probable",

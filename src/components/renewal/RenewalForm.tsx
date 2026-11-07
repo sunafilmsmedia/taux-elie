@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import type { RenewalInput } from "@/types/renewal";
 import Spectrum from "@/components/ui/Spectrum";
 import ProgressBar from "@/components/ui/ProgressBar";
+import BrokerCard from "@/components/ui/BrokerCard";
 import LoadingAI from "./LoadingAI";
 import { computeLivePreview } from "@/lib/livePreview";
 import { RATE_TYPE_LABELS, TERM_LABELS } from "@/lib/scoring";
+import { formatDateFr } from "@/lib/format";
+import { daysUntilRenewal, isWithinRateLockWindow, RATE_LOCK_WINDOW_DAYS } from "@/lib/renewalWindow";
 import {
   CAREER_OUTLOOK_OPTIONS,
   CURRENT_RATE_TYPE_OPTIONS,
@@ -19,6 +22,7 @@ import {
 } from "./questions";
 
 type StepKey =
+  | "renewalDate"
   | "careerOutlook"
   | "lifeChangeLikelihood"
   | "stressTolerance"
@@ -28,6 +32,7 @@ type StepKey =
   | "contact";
 
 const STEPS: StepKey[] = [
+  "renewalDate",
   "careerOutlook",
   "lifeChangeLikelihood",
   "stressTolerance",
@@ -49,6 +54,7 @@ export default function RenewalForm() {
   const [stepIndex, setStepIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [blockedTooEarly, setBlockedTooEarly] = useState(false);
 
   const clampedIndex = Math.min(stepIndex, STEPS.length - 1);
   const currentStep = STEPS[clampedIndex];
@@ -63,6 +69,15 @@ export default function RenewalForm() {
 
   function goNext() {
     if (clampedIndex < STEPS.length - 1) setStepIndex(clampedIndex + 1);
+  }
+
+  function continueFromRenewalDate() {
+    if (!answers.renewalDate) return;
+    if (isWithinRateLockWindow(answers.renewalDate)) {
+      goNext();
+    } else {
+      setBlockedTooEarly(true);
+    }
   }
 
   function goBack() {
@@ -109,6 +124,42 @@ export default function RenewalForm() {
     return (
       <main className="min-h-screen bg-gradient-to-b from-black via-[#04130f] to-black text-white">
         <LoadingAI />
+      </main>
+    );
+  }
+
+  if (blockedTooEarly && answers.renewalDate) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-[#04130f] to-black px-6 py-16 text-white">
+        <div className="mx-auto w-full max-w-md animate-fadeUp text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-alert/30 bg-alert/10 px-4 py-1.5 text-xs font-semibold text-orange-200">
+            Trop tôt pour bloquer ton taux
+          </span>
+          <h1 className="mt-5 text-2xl font-extrabold leading-tight sm:text-3xl">
+            Ta date de renouvellement est le {formatDateFr(answers.renewalDate)}
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-slate-300">
+            Les prêteurs ne permettent de geler un taux que dans les {RATE_LOCK_WINDOW_DAYS} jours
+            (environ 4 mois) avant l&apos;échéance. Comme il reste encore{" "}
+            {daysUntilRenewal(answers.renewalDate)} jours, on ne peut pas te garantir de taux pour
+            l&apos;instant.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">
+            Reviens faire le quiz plus proche de ta date, ou laisse tes coordonnées à Elie
+            dès maintenant pour qu&apos;il te recontacte au bon moment.
+          </p>
+
+          <div className="mt-6">
+            <BrokerCard />
+          </div>
+
+          <button
+            onClick={() => setBlockedTooEarly(false)}
+            className="mt-5 h-12 w-full rounded-2xl border border-white/15 text-sm font-semibold text-slate-200 transition hover:bg-white/5"
+          >
+            Modifier la date
+          </button>
+        </div>
       </main>
     );
   }
@@ -164,6 +215,14 @@ export default function RenewalForm() {
               >
                 Voir mon résultat IA
               </button>
+            ) : currentStep === "renewalDate" ? (
+              <button
+                onClick={continueFromRenewalDate}
+                disabled={!canContinue}
+                className="h-14 flex-1 rounded-2xl bg-gradient-to-r from-brand to-ai px-8 text-base font-extrabold text-black shadow-glow transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Continuer
+              </button>
             ) : (
               <p className="text-sm text-white/40">Touche une réponse pour continuer →</p>
             )}
@@ -218,6 +277,8 @@ export default function RenewalForm() {
 
 function validateStep(step: StepKey, a: Answers): boolean {
   switch (step) {
+    case "renewalDate":
+      return !!a.renewalDate;
     case "careerOutlook":
       return !!a.careerOutlook;
     case "lifeChangeLikelihood":
@@ -255,6 +316,7 @@ function buildPayload(a: Answers): RenewalInput {
     lastName,
     email: a.email?.trim() ?? "",
     phone: a.phone?.trim() ?? "",
+    renewalDate: a.renewalDate ?? "",
     careerOutlook: a.careerOutlook!,
     lifeChangeLikelihood: a.lifeChangeLikelihood!,
     stressTolerance: a.stressTolerance!,
@@ -281,6 +343,8 @@ function StepContent({ step, answers, update, advance }: StepContentProps) {
   };
 
   switch (step) {
+    case "renewalDate":
+      return <DateStep answers={answers} update={update} />;
     case "careerOutlook":
       return (
         <SingleChoice
@@ -413,6 +477,23 @@ function OptionButton({
       </span>
       {label}
     </button>
+  );
+}
+
+function DateStep({ answers, update }: { answers: Answers; update: (patch: Answers) => void }) {
+  return (
+    <div>
+      <StepTitle
+        title="Quelle est la date de ton renouvellement hypothécaire?"
+        subtitle="La date indiquée sur ton dernier avis de renouvellement."
+      />
+      <input
+        type="date"
+        value={answers.renewalDate ?? ""}
+        onChange={(e) => update({ renewalDate: e.target.value })}
+        className="w-full rounded-2xl border border-white/15 bg-white/5 px-5 py-4 text-base font-semibold text-white placeholder:text-slate-500 focus:border-ai focus:outline-none"
+      />
+    </div>
   );
 }
 

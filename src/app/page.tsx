@@ -1,4 +1,5 @@
 import BrokerCard from "@/components/ui/BrokerCard";
+import HookHeadline from "@/components/ui/HookHeadline";
 import TrackedLink from "@/components/ui/TrackedLink";
 
 export default function LandingPage() {
@@ -19,13 +20,7 @@ export default function LandingPage() {
           Gratuit • Sans engagement • 2 minutes
         </span>
 
-        <h1 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-          Taux{" "}
-          <span className="neon-word inline-block pr-1 align-baseline text-[1.15em] leading-none">
-            fixe
-          </span>{" "}
-          ou variable pour ton renouvellement?
-        </h1>
+        <HookHeadline />
 
         <p className="ai-gradient-text mt-6 text-lg font-semibold">
           Découvre ce qui correspond à TON profil, propulsé par l&apos;IA

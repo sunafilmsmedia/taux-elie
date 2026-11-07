@@ -8,6 +8,8 @@ export const renewalInputSchema = z.object({
   email: z.string().trim().email("Courriel invalide"),
   phone: z.string().trim().regex(phoneRegex, "Numéro de téléphone invalide"),
 
+  renewalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de renouvellement invalide"),
+
   careerOutlook: z.enum(["stable", "raise_expected", "job_change_likely", "uncertain"]),
   lifeChangeLikelihood: z.enum(["unlikely", "maybe", "likely", "planned"]),
   stressTolerance: z.enum(["very_stressed", "somewhat", "comfortable"]),
